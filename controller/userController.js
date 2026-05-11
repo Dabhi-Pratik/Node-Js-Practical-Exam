@@ -9,7 +9,7 @@ const addUser = async (req, res, next) => {
       name,
       email,
       password,
-      role
+      role,
     };
 
     const user = new User(newUser);
@@ -66,48 +66,61 @@ const authLogin = async (req, res, next) => {
 };
 
 const logOut = async (req, res, next) => {
-
   try {
+    req.user.tokens = req.user.tokens.filter((t) => t.token != req.token);
 
-    req.user.tokens = req.user.tokens.filter((t) => t.token != req.token)
+    await req.user.save();
 
-    await req.user.save()
-
-    res.status(200).json({ message: "User Log out SuccessFully...!" })
-
+    res.status(200).json({ message: "User Log out SuccessFully...!" });
   } catch (error) {
-    next(new HttpError(error.message, 500))
+    next(new HttpError(error.message, 500));
   }
-}
+};
 
 const logOutAll = async (req, res, next) => {
   try {
-    req.user.tokens = []
+    req.user.tokens = [];
 
-    req.user.save()
+    req.user.save();
 
-    res.status(200).json({ message: "User LogOut from all devices SuccessFully" })
+    res
+      .status(200)
+      .json({ message: "User LogOut from all devices SuccessFully" });
   } catch (error) {
-    next(new HttpError(error.message, 500))
+    next(new HttpError(error.message, 500));
   }
-}
+};
+
 const allUser = async (req, res, next) => {
   try {
-    const users = await User.find({});
+    if (req.user.role === "admin") {
+      const users = await User.find({});
 
-    if (!users) {
-      return next(new HttpError("No User Data Founded...!"));
+      return res.status(200).json({
+        success: true,
+        message: "All Users Data",
+        users,
+      });
     }
 
-    res.status(200).json({ success: true, message: "User Data", users });
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return next(new HttpError("User not Found...!", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User Profile Data",
+      user,
+    });
   } catch (error) {
-    next(new HttpError(error.message));
+    next(new HttpError(error.message, 500));
   }
 };
 
 const update = async (req, res, next) => {
   try {
-
     const userId = req.params.id || req.user._id;
 
     const user = await User.findById(userId);
@@ -126,14 +139,10 @@ const update = async (req, res, next) => {
 
     const updates = Object.keys(req.body);
 
-    const isValid = updates.every((field) =>
-      allowUpdates.includes(field)
-    );
+    const isValid = updates.every((field) => allowUpdates.includes(field));
 
     if (!isValid) {
-      return next(
-        new HttpError("Only allowed Fields can be Updated.....!")
-      );
+      return next(new HttpError("Only allowed Fields can be Updated.....!"));
     }
 
     updates.forEach((field) => {
@@ -147,25 +156,20 @@ const update = async (req, res, next) => {
       message: "Updated Successfully...!",
       user,
     });
-
   } catch (error) {
     next(new HttpError(error.message));
   }
-}
-
+};
 
 const deleteUser = async (req, res, next) => {
   try {
-
-    const userId = req.params.id || req.user._id
+    const userId = req.params.id || req.user._id;
 
     if (req.user.role !== "admin") {
-      return next(
-        new HttpError("Access Denied. Admin Only...!", 403)
-      );
+      return next(new HttpError("Access Denied. Admin Only...!", 403));
     }
 
-    const user = await User.findById(userId)
+    const user = await User.findById(userId);
 
     if (!user) {
       return next(new HttpError("User not Found.....!"));
@@ -173,12 +177,21 @@ const deleteUser = async (req, res, next) => {
 
     await user.deleteOne();
 
-    res.status(200).json({ success: true, message: "User Deleted Successfully......!" })
-
+    res
+      .status(200)
+      .json({ success: true, message: "User Deleted Successfully......!" });
   } catch (error) {
-
-    next(new HttpError(error.message))
+    next(new HttpError(error.message));
   }
-}
+};
 
-export default { addUser, login, allUser, authLogin, logOut, logOutAll, update, deleteUser }
+export default {
+  addUser,
+  login,
+  allUser,
+  authLogin,
+  logOut,
+  logOutAll,
+  update,
+  deleteUser,
+};

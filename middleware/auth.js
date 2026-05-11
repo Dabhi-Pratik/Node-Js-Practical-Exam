@@ -6,15 +6,13 @@ const auth = async function (req, res, next) {
   try {
     const authHeader = req.header("Authorization");
 
-    console.log("Authorization", authHeader);
+  
 
     if (!authHeader) {
       return next(new HttpError("Auth header is Requires..."));
     }
 
    const token = authHeader.replace("Bearer ", "");
-
-    // console.log("Token", token);
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
