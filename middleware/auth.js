@@ -1,6 +1,6 @@
 import HttpError from "./HttpError.js";
 import jwt from "jsonwebtoken";
-import User from "../model/userModel.js";
+import User from "../model/UserModel.js";
 
 const auth = async function (req, res, next) {
   try {
@@ -12,9 +12,9 @@ const auth = async function (req, res, next) {
       return next(new HttpError("Auth header is Requires..."));
     }
 
-    const token = authHeader.replace("Bearer ", "");
+   const token = authHeader.replace("Bearer ", "");
 
-    console.log("Token", token);
+    // console.log("Token", token);
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

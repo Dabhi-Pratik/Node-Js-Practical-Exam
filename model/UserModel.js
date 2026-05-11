@@ -91,10 +91,24 @@ userSchema.methods.generateAuthToken = async function () {
     user.tokens = user.tokens.concat({ token });
 
     await user.save();
+
+    return token
   } catch (error) {
     throw new Error(error.message);
   }
 };
+
+userSchema.methods.toJSON = function (){
+  const user = this
+
+  const userOject = user.toObject()
+
+  delete userOject.tokens
+  delete userOject.password
+  delete userOject._id
+
+  return userOject
+}
 
 const User = mongoose.models.user || mongoose.model("user", userSchema);
 
